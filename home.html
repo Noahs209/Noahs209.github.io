@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nanosite - Arcade</title>
+    <style>
+        /* --- CSS STYLES --- */
+        :root {
+            --bg-color: #0f0f0f;
+            --card-bg: #1e1e1e;
+            --text-main: #ffffff;
+            --text-sec: #aaaaaa;
+            --accent: #000283; /* YouTube Red-ish */
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Roboto', Arial, sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Navbar */
+        nav {
+            background-color: #202020;
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo span {
+            background-color: var(--accent);
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-size: 0.8em;
+        }
+
+        /* Main Layout */
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2rem;
+        }
+
+        /* The Game Player Area (Initially Hidden) */
+        #game-stage {
+            display: none; /* Hidden until a game is clicked */
+            width: 100%;
+            max-width: 1280px;
+            margin: 0 auto 40px auto;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            animation: fadeIn 0.5s ease;
+        }
+
+        .iframe-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+            background: #000;
+        }
+
+        .iframe-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .game-controls {
+            padding: 15px 20px;
+            background-color: #1a1a1a;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .game-info h2 {
+            margin: 0;
+            font-size: 1.2rem;
+        }
+
+        .btn {
+            background-color: #333;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            background-color: #444;
+        }
+
+        .btn-close {
+            background-color: #0e008b;
+        }
+        .btn-close:hover {
+            background-color: #0b00a0;
+        }
+
+        /* Grid of Games (YouTube Style Thumbnails) */
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 20px 0;
+        }
+
+        .game-card {
+            background-color: transparent;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .game-card:hover {
+            transform: scale(1.02);
+        }
+
+        .thumbnail-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16/9;
+            background-color: #333;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .thumbnail-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Play Icon Overlay */
+        .play-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .game-card:hover .play-overlay {
+            opacity: 1;
+        }
+
+        .play-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(0,0,0,0.7);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .play-triangle {
+            width: 0; 
+            height: 0; 
+            border-top: 10px solid transparent;
+            border-bottom: 10px solid transparent;
+            border-left: 18px solid white;
+            margin-left: 4px; /* Optical adjustment */
+        }
+
+        .game-details {
+            display: flex;
+            gap: 12px;
+        }
+
+        .game-avatar {
+            width: 36px;
+            height: 36px;
+            background-color: var(--accent);
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .game-meta {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .game-title {
+            font-size: 1rem;
+            font-weight: bold;
+            margin: 0 0 4px 0;
+            line-height: 1.4;
+        }
+
+        .game-channel {
+            font-size: 0.85rem;
+            color: var(--text-sec);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 600px) {
+            .games-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="logo">
+            <span>NANO</span> SITE
+        </div>
+        <div>
+            <!-- Login/Search placeholders could go here -->
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>Welcome To NanoSite</h1>
+
+        <!-- THE GAME PLAYER (Hidden by default) -->
+        <div id="game-stage">
+            <div class="iframe-container">
+                <!-- 
+                     IMPORTANT: The 'src' here is empty by default. 
+                     JavaScript fills it when you click a game.
+                -->
+                <iframe id="game-frame" allowfullscreen title="Game Window"></iframe>
+            </div>
+            <div class="game-controls">
+                <div class="game-info">
+                    <h2 id="playing-title">Now Playing: CoolV1</h2>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn" onclick="toggleFullscreen()">
+                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+                        Fullscreen
+                    </button>
+                    <button class="btn btn-close" onclick="closeGame()">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- THE GAME LIST -->
+        <div class="games-grid">
+            
+            <!-- GAME CARD 1: CoolV1 -->
+            <!-- 
+                 UPDATED: The path is now simply 'games/index.html'
+                 This assumes your folder structure is:
+                 /NanoSite (or root)
+                    index.html (this file)
+                    /games
+                        index.html (the game)
+            -->
+            <div class="game-card" onclick="loadGame('CoolV1', 'games/CoolV1/index.html')">
+                <div class="thumbnail-container">
+                    <!-- Updated path to check inside 'games' folder first -->
+                    <img src="photos/happymanThumb.png" onerror="this.src='CoolV1.png'; this.onerror=null;" alt="CoolV1 Thumbnail">
+                    <div class="play-overlay">
+                        <div class="play-icon">
+                            <div class="play-triangle"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="game-details">
+                    <!-- Updated path to check inside 'games' folder first -->
+                    <img class="game-avatar" src="photos/black.jpg" onerror="this.src='CoolV1.icon.png'; this.onerror=null;" alt="Icon">
+                    <div class="game-meta">
+                        <h3 class="game-title">CoolV1: Made With Godot</h3>
+                        <span class="game-channel">NanoDev • Version 1.0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Example of a Second Game Card (Visual only) -->
+            <div class="game-card">
+                <div class="thumbnail-container">
+                    <img src="https://placehold.co/600x338/222/666?text=Coming+Soon" alt="Coming Soon">
+                </div>
+                <div class="game-details">
+                    <div class="game-avatar" style="background-color: #444;"></div>
+                    <div class="game-meta">
+                        <h3 class="game-title">More Coming Soon</h3>
+                        <span class="game-channel">NanoDev</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        /* --- JAVASCRIPT LOGIC --- */
+
+        const gameStage = document.getElementById('game-stage');
+        const gameFrame = document.getElementById('game-frame');
+        const playingTitle = document.getElementById('playing-title');
+
+        // Function to load the game into the player
+        function loadGame(gameName, gamePath) {
+            // 1. Show the player area
+            gameStage.style.display = 'block';
+            
+            // 2. Set the Title
+            playingTitle.innerText = "Now Playing: " + gameName;
+
+            // 3. Set the Iframe Source
+            gameFrame.src = gamePath; 
+
+            // 4. Scroll to top to see the game
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+
+        // Function to close the game
+        function closeGame() {
+            gameStage.style.display = 'none';
+            gameFrame.src = ""; // Stop the game from running in background
+        }
+
+        // Function to toggle Fullscreen
+        function toggleFullscreen() {
+            const elem = document.getElementById("game-frame");
+            
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+            } else if (elem.webkitRequestFullscreen) { /* Safari */
+                elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) { /* IE11 */
+                elem.msRequestFullscreen();
+            }
+        }
+    </script>
+</body>
+</html>
